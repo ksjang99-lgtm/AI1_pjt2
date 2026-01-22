@@ -23,7 +23,7 @@ with st.container(border=True):
         selected_scope = st.selectbox("문서 카테고리", options=list(SCOPES.keys()), 
                                      format_func=lambda x: SCOPES[x])
     
-    if st.button("🚀 업로드 및 인덱싱 시작", data_priority="primary"):
+    if st.button("🚀 업로드 및 인덱싱 시작", type="primary"):
         if uploaded_file:
             with st.spinner("Google Gemini가 문서를 분석하고 인덱싱 중입니다..."):
                 # 임시 파일 저장 후 업로드
