@@ -26,6 +26,26 @@ async def get_documents(scope: Optional[str] = None):
 # ---------------------------------------------------------
 # [2] 문서 업로드 및 인덱싱 엔드포인트
 # ---------------------------------------------------------
+@app.post("/v1/documents/upload")
+async def upload_document(file: UploadFile = File(...), scope: Optional[str] = Form(None)):
+    """입찰 관련 문서를 업로드하고 인덱싱합니다."""
+    try:
+        # 임시 파일 저장
+        temp_file_path = f"temp/{file.filename}"
+        os.makedirs("temp", exist_ok=True)
+        with open(temp_file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # 파일 인덱싱
+        #file_service.index_file(STORE_NAME, temp_file_path, scope=scope)
+        file_service.upload_to_store(STORE_NAME, temp_file_path, file.filename, scope=scope)
+
+        # 임시 파일 삭제
+        os.remove(temp_file_path)
+
+        return {"status": "success", "message": f"파일 '{file.filename}'이(가) 성공적으로 업로드 및 인덱싱되었습니다."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ---------------------------------------------------------
 # [3] AI 질의응답(RAG) 엔드포인트
