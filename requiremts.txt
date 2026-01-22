@@ -1,0 +1,12 @@
+# Web Framework & UI
+streamlit>=1.30.0
+
+# Google Generative AI SDK
+google-genai>=0.1.0
+
+# Environment Variable Management
+python-dotenv>=1.0.0
+
+# Optional: Performance & Utilities
+requests>=2.31.0
+pandas>=2.0.0
