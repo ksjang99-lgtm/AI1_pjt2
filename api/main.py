@@ -1,27 +1,26 @@
-import uuid
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status
 from typing import List, Optional
 import os
 import shutil
-
+# from enum import Enum
 # 앞서 작성한 서비스 레이어 임포트
 from services import file_service, rag_service, gemini_client
+from api.Enums import DocumentScope
 
 app = FastAPI(title="스타빌 입찰 지원 RAG API")
 
 # .env에서 설정한 기본 스토어 이름 사용
 STORE_NAME = gemini_client.get_default_store_name()
 
-print(f"DEBUG: defualt {STORE_NAME}")
-
 
 # ---------------------------------------------------------
 # [1] 문서 목록 조회 엔드포인트
 # ---------------------------------------------------------
 @app.get("/v1/documents/list")
-async def get_documents(scope: Optional[str] = None):
+async def get_documents(scopeEnum: Optional[DocumentScope] = Query(None)):
     """현재 인덱싱된 입찰 관련 문서 목록을 반환합니다."""
     try:
+        scope = None if scopeEnum is None else scopeEnum.name
         files = file_service.list_files(STORE_NAME, scope=scope)
         return {"status": "success", "data": files}
     except Exception as e:
@@ -36,14 +35,12 @@ async def upload_document(
     scope: Optional[str] = Form("law")
 ):
     """입찰 관련 문서를 업로드하고 인덱싱합니다. 중복 파일은 거부합니다."""
-    print(f"DEBUG: {file.filename}, {scope}")
     try:
         # 1. 중복 파일 체크 (업로드 전 미리 확인)
         # 같은 scope 내에 동일한 파일명이 있는지 확인합니다.
         existing_files = file_service.list_files(STORE_NAME, scope=scope)
         if any(f["display_name"] == file.filename for f in existing_files):
             # 409 Conflict: 서버의 현재 상태와 요청이 충돌할 때 사용
-            print(f"DEBUG: Conflict")
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"이미 동일한 파일명('{file.filename}')이 해당 scope('{scope}') 내에 존재합니다."
@@ -59,13 +56,11 @@ async def upload_document(
 
         with open(temp_file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        
-        print(f"DEBUG: 3")
 
         try:
             # 3. Gemini Store 파일 업로드 및 인덱싱
             file_service.upload_to_store(STORE_NAME, temp_file_path, file.filename, scope=scope)
-            print(f"DEBUG: 4")
+
         finally:
             # 성공/실패 여부와 상관없이 임시 파일은 반드시 삭제
             if os.path.exists(temp_file_path):
@@ -89,7 +84,6 @@ async def delete_document(
     document_resource_name: str = Form(..., description="삭제할 문서의 Resource Name (예: fileSearchStores/.../documents/...)")
 ):
     """지정된 문서를 Store에서 영구적으로 삭제합니다."""
-    print(f"DEBUG: Attempting to delete document: {document_resource_name}")
     
     try:
         # 1. 서비스 레이어의 delete_file 호출

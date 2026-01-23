@@ -4,8 +4,10 @@ import tempfile
 from typing import List, Dict, Any, Iterable
 from .gemini_client import get_client
 
+
 client = get_client()
 COMPANY = "starbill"
+
 
 # ---------------------------------
 # Helpers
@@ -28,6 +30,7 @@ def normalize_meta(meta: Any) -> Dict[str, str]:
             v = getattr(item, 'string_value', None) or item.get('string_value')
             if k and v: out[str(k)] = str(v)
     return out
+
 
 def list_files(store_name: str, scope: str = None) -> List[Dict[str, str]]:
     """Store 내 문서 목록 조회 및 필터링"""
@@ -59,8 +62,6 @@ def upload_to_store(store_name: str, file_path: str, filename: str, scope: str):
             {"key": "scope", "string_value": scope},
         ],
     }
-
-    print(f"DEBUG: {config['display_name']}")
     
     # 업로드 실행
     op = client.file_search_stores.upload_to_file_search_store(
@@ -68,14 +69,9 @@ def upload_to_store(store_name: str, file_path: str, filename: str, scope: str):
         file_search_store_name=store_name,
         config=config,
     )
-
-    print(f"DEBUG: show??")
-    
-    print(f"DEBUG: Operation started. Name: {op.name}")
     
 # 2. 인덱싱 완료 대기
     while not op.done:
-        print("DEBUG: Waiting for indexing...")
         time.sleep(2)
         
         # 수정된 부분: name= 인자를 제거하고 op.name(문자열)만 전달
@@ -86,7 +82,6 @@ def upload_to_store(store_name: str, file_path: str, filename: str, scope: str):
     if getattr(op, "error", None):
         raise Exception(f"인덱싱 중 오류 발생: {op.error}")
 
-    print("DEBUG: Indexing completed.")
     
     # response 속성이 있으면 반환, 없으면 op 객체 자체 반환
     return getattr(op, "response", op)

@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import tempfile
 from services import file_service, gemini_client
 
 # 설정
@@ -25,18 +26,26 @@ with st.container(border=True):
     
     if st.button("🚀 업로드 및 인덱싱 시작", type="primary"):
         if uploaded_file:
-            with st.spinner("Google Gemini가 문서를 분석하고 인덱싱 중입니다..."):
-                # 임시 파일 저장 후 업로드
-                with st.named_temporary_file(delete=False, suffix=f"_{uploaded_file.name}") as tmp:
+            with st.spinner("중복 확인 및 인덱싱 중..."):
+                with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{uploaded_file.name}") as tmp:
                     tmp.write(uploaded_file.getvalue())
                     tmp_path = tmp.name
-                
                 try:
-                    file_service.upload_to_store(STORE_NAME, tmp_path, uploaded_file.name, selected_scope)
-                    st.success(f"✅ '{uploaded_file.name}' 업로드 완료!")
-                    st.session_state.refresh = True
+                    # 수정된 서비스 함수 호
+                    file_service.upload_to_store(STORE_NAME, uploaded_file, selected_scope)
+                    st.success(f"✅ '{uploaded_file.name}' 업로드 완료! (기존 동일 파일은 최신화되었습니다)")
+                    
+                    # 업로드 성공 시 목록 갱신을 위해 페이지 리런
+                    st.rerun() 
+                    
+                except Exception as e:
+                    if "이미 존재" in str(e):
+                        st.warning(f"⚠️ 중복 알림: {e}")
+                    else:
+                        st.error(f"❌ 오류 발생: {e}")
                 finally:
-                    if os.path.exists(tmp_path): os.remove(tmp_path)
+                    if os.path.exists(tmp_path):
+                        os.remove(tmp_path)
         else:
             st.warning("파일을 먼저 선택해주세요.")
 
