@@ -7,6 +7,15 @@ from .gemini_client import get_client
 client = get_client()
 COMPANY = "starbill"
 
+# ---------------------------------
+# Helpers
+# ---------------------------------
+def safe_get(obj: Any, attr: str, default=None):
+    try:
+        return getattr(obj, attr)
+    except Exception:
+        return default
+
 def normalize_meta(meta: Any) -> Dict[str, str]:
     """SDK 버전별로 다른 메타데이터 구조를 dict로 정규화"""
     if meta is None: return {}
@@ -42,6 +51,7 @@ def list_files(store_name: str, scope: str = None) -> List[Dict[str, str]]:
 
 def upload_to_store(store_name: str, file_path: str, filename: str, scope: str):
     """파일 업로드 및 인덱싱 완료 대기"""
+
     config = {
         "display_name": filename,
         "custom_metadata": [
@@ -49,6 +59,8 @@ def upload_to_store(store_name: str, file_path: str, filename: str, scope: str):
             {"key": "scope", "string_value": scope},
         ],
     }
+
+    print(f"DEBUG: {config['display_name']}")
     
     # 업로드 실행
     op = client.file_search_stores.upload_to_file_search_store(
@@ -56,13 +68,45 @@ def upload_to_store(store_name: str, file_path: str, filename: str, scope: str):
         file_search_store_name=store_name,
         config=config,
     )
+
+    print(f"DEBUG: show??")
     
-    # 인덱싱 완료 대기
+    print(f"DEBUG: Operation started. Name: {op.name}")
+    
+# 2. 인덱싱 완료 대기
     while not op.done:
+        print("DEBUG: Waiting for indexing...")
         time.sleep(2)
+        
+        # 수정된 부분: name= 인자를 제거하고 op.name(문자열)만 전달
+        # 만약 그래도 에러가 난다면 client.operations.get(op) 로 시도하세요.
         op = client.operations.get(op)
-    return op.result
+    
+    # 3. 결과 확인 및 에러 처리
+    if getattr(op, "error", None):
+        raise Exception(f"인덱싱 중 오류 발생: {op.error}")
+
+    print("DEBUG: Indexing completed.")
+    
+    # response 속성이 있으면 반환, 없으면 op 객체 자체 반환
+    return getattr(op, "response", op)
 
 def delete_file(document_resource_name: str):
     """특정 문서 삭제"""
-    return client.file_search_stores.documents.delete(name=document_resource_name)
+    docs_service = safe_get(client.file_search_stores, "documents", None)
+    if docs_service is None:
+        raise AttributeError("client.file_search_stores.documents 가 없습니다. SDK 버전을 확인하세요.")
+
+    delete_fn = safe_get(docs_service, "delete", None)
+    if delete_fn is None:
+        raise AttributeError("client.file_search_stores.documents.delete 가 없습니다. SDK 버전을 확인하세요.")
+
+    try:
+        delete_fn(name=document_resource_name, force=True)
+    except TypeError:
+        # SDK 버전에 따라 인자 형태가 다를 수 있어 fallback
+        try:
+            delete_fn(document_resource_name, force=True)
+        except TypeError:
+            # 또 다른 버전 형태: config 딕셔너리
+            delete_fn(name=document_resource_name, config={"force": True})

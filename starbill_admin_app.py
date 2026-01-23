@@ -179,9 +179,14 @@ def delete_document(document_resource_name: str) -> None:
         raise AttributeError("client.file_search_stores.documents.delete 가 없습니다. SDK 버전을 확인하세요.")
 
     try:
-        delete_fn(name=document_resource_name)
+        delete_fn(name=document_resource_name, force=True)
     except TypeError:
-        delete_fn(document_resource_name, None)
+        # SDK 버전에 따라 인자 형태가 다를 수 있어 fallback
+        try:
+            delete_fn(document_resource_name, force=True)
+        except TypeError:
+            # 또 다른 버전 형태: config 딕셔너리
+            delete_fn(name=document_resource_name, config={"force": True})
 
 
 def delete_existing_same_filename(
@@ -260,7 +265,7 @@ with st.expander("Store 생성 / 설정", expanded=True):
     with col_s1:
         new_store_display_name = st.text_input(
             "새 Store display_name",
-            value=f"starbill-store-{datetime.now().strftime('%Y%m%d')}",
+            value=f"starbill-store-kjw-{datetime.now().strftime('%Y%m%d')}",
         ).strip()
 
     with col_s2:
@@ -392,6 +397,7 @@ def render_table(rows: List[Dict[str, str]], key_prefix: str):
     selected = st.selectbox("삭제할 문서 선택", options=labels, key=f"{key_prefix}_sel")
     idx = labels.index(selected)
     doc_name = rows[idx]["name"]
+    print("DEBUG: Selected doc_name:", doc_name)
 
     c1, c2 = st.columns([1, 3], vertical_alignment="center")
     confirm = c1.checkbox("삭제 확인", value=False, key=f"{key_prefix}_confirm")
