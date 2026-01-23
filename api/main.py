@@ -6,7 +6,8 @@ import shutil
 # from enum import Enum
 # 앞서 작성한 서비스 레이어 임포트
 from services import file_service, rag_service, gemini_client
-from api.Enums import DocumentScope
+from api.enums import DocumentScope
+from api.schemas import ChatRequest, InternalChatQuery
 
 app = FastAPI(title="스타빌 입찰 지원 RAG API")
 
@@ -120,4 +121,33 @@ async def delete_document(
 # ---------------------------------------------------------
 # [3] AI 질의응답(RAG) 엔드포인트
 # ---------------------------------------------------------
+@app.post("/v1/chat/query")
+async def ask_question(request: ChatRequest):
+    """
+    구조화된 입찰 정보를 바탕으로 Gemini에게 질문합니다.
+    """
+    try:
+        query = InternalChatQuery(request.dict())
+        # 1. 입력받은 정보들을 하나의 프롬프트로 결합 (Context 구성)
+        enriched_prompt = f"""
+        [입찰 공고 정보]
+        - 유형: {query.buy_type} ({query.procurement_type})
+        - 품명: {query.procurement_gsc}
+        - 추정가격: {query.estimated_price} ({query.tax})
+        - 경쟁방식: {query.competition_method}
+        - 신청시작일: {query.rec_startdate}
 
+        [질문]
+        {query.prompt}
+
+        위 공고 정보와 업로드된 법령/지침 문서를 바탕으로 답변해 주세요.
+        """
+        # rag_service를 통해 문서 기반 답변 생성
+        response = rag_service.query_rag(
+            user_query=enriched_prompt,
+            store_name=STORE_NAME,
+            temperature=request.temperature
+        )
+        return {"status": "success", "answer": response["answer"], "meta": response["raw_meta"]}        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
