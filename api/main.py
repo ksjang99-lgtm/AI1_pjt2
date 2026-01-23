@@ -1,10 +1,11 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Query
 from typing import List, Optional
 import os
 import shutil
-
+# from enum import Enum
 # 앞서 작성한 서비스 레이어 임포트
 from services import file_service, rag_service, gemini_client
+from api.Enums import DocumentScope
 
 app = FastAPI(title="스타빌 입찰 지원 RAG API")
 
@@ -15,9 +16,10 @@ STORE_NAME = gemini_client.get_default_store_name()
 # [1] 문서 목록 조회 엔드포인트
 # ---------------------------------------------------------
 @app.get("/v1/documents/list")
-async def get_documents(scope: Optional[str] = None):
+async def get_documents(scopeEnum: Optional[DocumentScope] = Query(None)):
     """현재 인덱싱된 입찰 관련 문서 목록을 반환합니다."""
     try:
+        scope = None if scopeEnum is None else scopeEnum.name
         files = file_service.list_files(STORE_NAME, scope=scope)
         return {"status": "success", "data": files}
     except Exception as e:
