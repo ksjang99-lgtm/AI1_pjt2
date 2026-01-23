@@ -1,4 +1,5 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status
+import uuid
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status, Query
 from typing import List, Optional
 import os
 import shutil
@@ -11,7 +12,6 @@ app = FastAPI(title="스타빌 입찰 지원 RAG API")
 
 # .env에서 설정한 기본 스토어 이름 사용
 STORE_NAME = gemini_client.get_default_store_name()
-
 
 # ---------------------------------------------------------
 # [1] 문서 목록 조회 엔드포인트

@@ -265,7 +265,7 @@ with st.expander("Store 생성 / 설정", expanded=True):
     with col_s1:
         new_store_display_name = st.text_input(
             "새 Store display_name",
-            value=f"starbill-store-kjw-{datetime.now().strftime('%Y%m%d')}",
+            value=f"starbill-store-{datetime.now().strftime('%Y%m%d')}",
         ).strip()
 
     with col_s2:
@@ -397,7 +397,6 @@ def render_table(rows: List[Dict[str, str]], key_prefix: str):
     selected = st.selectbox("삭제할 문서 선택", options=labels, key=f"{key_prefix}_sel")
     idx = labels.index(selected)
     doc_name = rows[idx]["name"]
-    print("DEBUG: Selected doc_name:", doc_name)
 
     c1, c2 = st.columns([1, 3], vertical_alignment="center")
     confirm = c1.checkbox("삭제 확인", value=False, key=f"{key_prefix}_confirm")
