@@ -41,10 +41,10 @@ async def upload_document(
         existing_files = file_service.list_files(STORE_NAME, scope=scope)
         if any(f["display_name"] == file.filename for f in existing_files):
             # 409 Conflict: 서버의 현재 상태와 요청이 충돌할 때 사용
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"이미 동일한 파일명('{file.filename}')이 해당 scope('{scope}') 내에 존재합니다."
-            )
+            return {
+                "status": "fail", 
+                "message": f"이미 동일한 파일명('{file.filename}')이 해당 scope('{scope}') 내에 존재합니다."
+            }
 
         # 2. 임시 파일 저장
         # 한글 파일명 문제를 피하기 위해 로컬 저장용 임시 이름을 생성합니다.
@@ -104,11 +104,13 @@ async def delete_document(
     except Exception as e:
         # 문서가 이미 삭제되었거나 경로가 잘못된 경우 등
         # 상세 에러 메시지가 'not found'를 포함하면 404를 반환하도록 처리 가능
+        print("DEBUG: Exception during deletion %s:", str(e).lower())
         if "not found" in str(e).lower():
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="삭제하려는 문서를 찾을 수 없습니다."
-            )
+            return {
+                "status": "fail",
+                "message": "삭제하려는 문서를 찾을 수 없습니다.",
+                "resource_name": document_resource_name
+            }
         
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
