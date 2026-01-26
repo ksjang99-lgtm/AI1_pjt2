@@ -119,9 +119,3 @@ async def delete_document(
 # [3] AI 질의응답(RAG) 엔드포인트
 # ---------------------------------------------------------
 
-
-
-if __name__ == "__main__":
-    import uvicorn
-    # app은 FastAPI() 인스턴스 변수명과 일치해야 합니다.
-    uvicorn.run("api.main:app", host="0.0.0.0", port=8000, reload=True)
