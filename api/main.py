@@ -3,7 +3,8 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status, Quer
 from typing import List, Optional
 import os
 import shutil
-# from enum import Enum
+
+
 # 앞서 작성한 서비스 레이어 임포트
 from services import file_service, rag_service, gemini_client
 from api.enums import DocumentScope
@@ -127,26 +128,31 @@ async def ask_question(request: ChatRequest):
     구조화된 입찰 정보를 바탕으로 Gemini에게 질문합니다.
     """
     try:
-        query = InternalChatQuery(request.dict())
+        query = InternalChatQuery(**request.model_dump())
         # 1. 입력받은 정보들을 하나의 프롬프트로 결합 (Context 구성)
         enriched_prompt = f"""
-        [입찰 공고 정보]
+        ## 📥 입력 조건
+        다음은 사용자가 입력한 조달 조건이다.
         - 유형: {query.buy_type} ({query.procurement_type})
         - 품명: {query.procurement_gsc}
         - 추정가격: {query.estimated_price} ({query.tax})
         - 경쟁방식: {query.competition_method}
-        - 신청시작일: {query.rec_startdate}
+        - 입찰참가신청 시작일: {query.rec_startdate}
 
-        [질문]
         {query.prompt}
 
-        위 공고 정보와 업로드된 법령/지침 문서를 바탕으로 답변해 주세요.
+       ## 📝 작성 지시
+        - 위 입력 조건을 기준으로 입찰공고문 작성을 수행하라.
+        - 반드시 Google File Search (RAG) 를 사용하여 관련 법령, 지침, 기존 입찰공고문을 검색하라.
+        - 모든 문장은 공식 입찰공고문 문체로 작성하라.
+
+        
         """
         # rag_service를 통해 문서 기반 답변 생성
         response = rag_service.query_rag(
             user_query=enriched_prompt,
             store_name=STORE_NAME,
-            temperature=request.temperature
+            temperature=query.temperature
         )
         return {"status": "success", "answer": response["answer"], "meta": response["raw_meta"]}        
     except Exception as e:

@@ -1,3 +1,4 @@
+from datetime import date
 from pydantic import BaseModel
 from typing import Optional
 
@@ -9,7 +10,7 @@ class ChatRequest(BaseModel):
     tax: str                 # 과세/면세
     procurement_gsc: str     # 물품명 등
     competition_method: str  # 경쟁방식
-    rec_startdate: str       # 신청시작일
+    rec_startdate: date       # 입찰참가신청 시작일
     prompt: str              # 실제 질문 내용
     
 
