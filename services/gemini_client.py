@@ -5,11 +5,11 @@ from google import genai
 # 환경 변수 로드
 load_dotenv()
 
-API_KEY = (os.getenv("GEMINI_API_KEY") or "").strip()
+API_KEY = (os.getenv("GOOGLE_API_KEY") or "").strip()
 STORE_NAME = (os.getenv("FILE_SEARCH_STORE_NAME") or "").strip()
 
 if not API_KEY:
-    raise RuntimeError("GEMINI_API_KEY가 .env 파일에 설정되어 있지 않습니다.")
+    raise RuntimeError("GOOGLE_API_KEY .env 파일에 설정되어 있지 않습니다.")
 
 # 전역 Client 인스턴스 생성
 client = genai.Client(api_key=API_KEY)

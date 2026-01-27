@@ -5,7 +5,7 @@
 ### 1️⃣ `.env` 파일 생성
 프로젝트 **루트 디렉토리 (PROJECT ROOT)** 에 `.env` 파일을 생성하고 아래 내용을 입력합니다.
 ```env
-GEMINI_API_KEY=값
+GOOGLE_API_KEY=Google API 키 값
 FILE_SEARCH_STORE_NAME=
 FILE_SEARCH_STORE_DISPLAY_NAME=starbill-main-store
 GEMINI_API_KEY : Gemini API 키 값

@@ -154,6 +154,9 @@ async def ask_question(request: ChatRequest):
             store_name=STORE_NAME,
             temperature=query.temperature
         )
-        return {"status": "success", "answer": response["answer"], "meta": response["raw_meta"]}        
+        if response is None:
+            return {"status": "fail", "message": "지정된 형식의 Json 응답을 생성하지 못했습니다."}
+        else:
+            return {"status": "success", "data": response}   
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"status": "fail", "message": str(e)}

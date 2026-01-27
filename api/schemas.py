@@ -1,6 +1,16 @@
-from datetime import date
-from pydantic import BaseModel
-from typing import Optional
+from datetime import datetime, date
+from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional, List
+
+class Section(BaseModel):
+    title: str = Field(..., description="섹션 제목")
+    items: List[str] = Field(..., description="상세 항목 리스트")
+    model_config = ConfigDict(extra="forbid")
+
+class BiddingNoticeResponse(BaseModel):
+    # 모든 응답을 'title'과 'items'를 가진 객체들의 리스트로 구성
+    sections: List[Section] = Field(..., description="입찰공고 전체 섹션")
+    model_config = ConfigDict(extra="forbid")
 
 # 클라이언트가 보낼 데이터 구조 정의
 class ChatRequest(BaseModel):
