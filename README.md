@@ -1,4 +1,5 @@
-# ⚡ 썬더DS AI 에이전트
+# ⚡ LexBid 입찰 지원 RAG API
+[Cloud Service](https://ai1-pjt2.onrender.com/docs)
 
 ## 🔧 환경설정
 
