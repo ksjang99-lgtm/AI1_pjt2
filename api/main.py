@@ -10,7 +10,7 @@ from services import file_service, rag_service, gemini_client
 from api.enums import DocumentScope
 from api.schemas import ChatRequest, InternalChatQuery
 
-app = FastAPI(title="스타빌 입찰 지원 RAG API")
+app = FastAPI(title="LexBid 입찰 지원 RAG API")
 
 # .env에서 설정한 기본 스토어 이름 사용
 STORE_NAME = gemini_client.get_default_store_name()
